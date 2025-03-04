@@ -39,16 +39,18 @@
     // Configuración de la escena
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
     // Controles de cámara con el ratón
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.dampingFactor = 0.1;
+    controls.rotateSpeed = 0.5;
 
     // Crear la rejilla de grafeno (estructura hexagonal)
-    const grafenoMaterial = new THREE.LineBasicMaterial({ color: 0x888888 });
+    const grafenoMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, side: THREE.DoubleSide });
     const grafenoGeometry = new THREE.BufferGeometry();
     let vertices = [];
     const hexSize = 1;
@@ -70,18 +72,27 @@
     }
 
     grafenoGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    const grafeno = new THREE.LineSegments(grafenoGeometry, grafenoMaterial);
+    const grafeno = new THREE.Mesh(grafenoGeometry, grafenoMaterial);
     scene.add(grafeno);
 
     // Crear la esfera de mercurio
     const mercurioGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const mercurioMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const mercurioMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
     const mercurio = new THREE.Mesh(mercurioGeometry, mercurioMaterial);
-    mercurio.position.set(2.5, 2.5, 5);
+    mercurio.position.set(0, 0, 5);
     scene.add(mercurio);
 
+    // Añadir luz
+    const light = new THREE.PointLight(0xffffff, 1, 100);
+    light.position.set(10, 10, 10);
+    scene.add(light);
+
+     //Añadir luz ambiental
+    const ambientLight = new THREE.AmbientLight( 0x404040 );
+    scene.add( ambientLight );
+
     // Posicionar la cámara
-    camera.position.set(0, -10, 5);
+    camera.position.set(0, -8, 6);
     camera.lookAt(0, 0, 0);
 
     // Variables de animación
