@@ -2,38 +2,16 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grafeno y Mercurio Interactivo</title>
+    <meta name="viewport" content="width:device-width, initial-scale=1.0">
+    <title>Grafeno y Mercurio - Ciclo Permanente</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
     <style>
         body { margin: 0; background-color: black; text-align: center; font-family: Arial, sans-serif; }
         canvas { display: block; }
-        .controls {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-        }
-        button {
-            background-color: #222;
-            color: white;
-            border: 1px solid white;
-            padding: 10px 15px;
-            margin: 5px;
-            cursor: pointer;
-        }
-        button:hover { background-color: #444; }
     </style>
 </head>
 <body>
-
-<div class="controls">
-    <button onclick="startAnimation()">Iniciar</button>
-    <button onclick="pauseAnimation()">Pausar</button>
-    <button onclick="resetAnimation()">Reiniciar</button>
-</div>
 
 <script>
     // Configuración de la escena
@@ -88,7 +66,7 @@
     scene.add(light);
 
     //Añadir luz ambiental
-    const ambientLight = new THREE.AmbientLight( 0x404040 ); // soft white light
+    const ambientLight = new THREE.AmbientLight( 0x404040 );
     scene.add( ambientLight );
 
     // Posicionar la cámara
@@ -97,36 +75,32 @@
 
     // Variables de animación
     let velocity = -0.02;
-    let animationRunning = false;
     let bounceFactor = 0.6; // Factor de rebote
     let gravity = -0.02;
 
     function animate() {
-        if (animationRunning) {
-            // Simular caída con rebote
-            if (mercurio.position.z > 0.5) {
-                velocity += gravity; // Aceleración por gravedad
-                mercurio.position.z += velocity;
+        // Simular caída con rebote
+        if (mercurio.position.z > 0.5) {
+            velocity += gravity; // Aceleración por gravedad
+            mercurio.position.z += velocity;
+        } else {
+            velocity = -velocity * bounceFactor; // Rebote
+            if (Math.abs(velocity) < 0.01) {
+                velocity = 0; // Detener rebote pequeño
             } else {
-                velocity = -velocity * bounceFactor; // Rebote
-                if (Math.abs(velocity) < 0.01) {
-                    velocity = 0; // Detener rebote pequeño
-                }
+              mercurio.position.z += velocity;
             }
         }
 
         controls.update();
         renderer.render(scene, camera);
         requestAnimationFrame(animate);
-    }
 
-    // Funciones de control
-    function startAnimation() { animationRunning = true; }
-    function pauseAnimation() { animationRunning = false; }
-    function resetAnimation() {
-        animationRunning = false;
-        mercurio.position.z = 5;
-        velocity = -0.02;
+         // Reiniciar la posición de la esfera cuando caiga por debajo del plano
+        if (mercurio.position.z < -2) {
+            mercurio.position.z = 5;
+            velocity = -0.02;
+        }
     }
 
     animate(); // Iniciar animación
