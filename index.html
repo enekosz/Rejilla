@@ -2,109 +2,101 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width:device-width, initial-scale=1.0">
-    <title>Grafeno y Mercurio - Ciclo Permanente</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafeno y Mercurio</title>
     <style>
-        body { margin: 0; background-color: black; text-align: center; font-family: Arial, sans-serif; }
+        body { margin: 0; overflow: hidden; background-color: black; }
         canvas { display: block; }
     </style>
 </head>
 <body>
+    <canvas id="grafenoCanvas"></canvas>
 
-<script>
-    // Configuración de la escena
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+    <script>
+        const canvas = document.getElementById('grafenoCanvas');
+        const ctx = canvas.getContext('2d');
 
-    // Controles de cámara con el ratón
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.1;
-    controls.rotateSpeed = 0.5;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-    // Crear la rejilla de grafeno (estructura hexagonal)
-    const grafenoMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, side: THREE.DoubleSide });
-    const grafenoGeometry = new THREE.BufferGeometry();
-    let vertices = [];
-    const hexSize = 1;
+        const hexSize = 30;
+        const hexSpacing = hexSize * 1.5;
+        const hexRows = Math.ceil(canvas.height / (hexSize * Math.sqrt(3)));
+        const hexCols = Math.ceil(canvas.width / hexSpacing);
 
-    for (let i = -5; i <= 5; i++) {
-        for (let j = -5; j <= 5; j++) {
-            const xOffset = i * 1.5 * hexSize;
-            const yOffset = j * Math.sqrt(3) * hexSize + (i % 2 === 0 ? 0 : Math.sqrt(3) / 2);
-            let hexagon = [
-                [xOffset, yOffset, 0], [xOffset + hexSize, yOffset, 0],
-                [xOffset + 1.5 * hexSize, yOffset + Math.sqrt(3) / 2 * hexSize, 0],
-                [xOffset + hexSize, yOffset + Math.sqrt(3) * hexSize, 0],
-                [xOffset, yOffset + Math.sqrt(3) * hexSize, 0],
-                [xOffset - 0.5 * hexSize, yOffset + Math.sqrt(3) / 2 * hexSize, 0],
-                [xOffset, yOffset, 0]
-            ];
-            hexagon.forEach(v => vertices.push(...v));
+        const mercury = [];
+        const capturePositions = [canvas.width - 50, canvas.width - 150, canvas.width - 250]; // Posiciones de captura
+
+        function drawHexagon(x, y) {
+            ctx.beginPath();
+            for (let i = 0; i < 7; i++) {
+                const angle = 2 * Math.PI / 6 * i;
+                const xPos = x + hexSize * Math.cos(angle);
+                const yPos = y + hexSize * Math.sin(angle);
+                ctx.lineTo(xPos, yPos);
+            }
+            ctx.strokeStyle = '#888';
+            ctx.stroke();
         }
-    }
 
-    grafenoGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    const grafeno = new THREE.Mesh(grafenoGeometry, grafenoMaterial);
-    scene.add(grafeno);
-
-    // Crear la esfera de mercurio
-    const mercurioGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const mercurioMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-    const mercurio = new THREE.Mesh(mercurioGeometry, mercurioMaterial);
-    mercurio.position.set(0, 0, 5);
-    scene.add(mercurio);
-
-    // Añadir luz
-    const light = new THREE.PointLight(0xffffff, 1, 100);
-    light.position.set(10, 10, 10);
-    scene.add(light);
-
-    //Añadir luz ambiental
-    const ambientLight = new THREE.AmbientLight( 0x404040 );
-    scene.add( ambientLight );
-
-    // Posicionar la cámara
-    camera.position.set(0, -8, 6);
-    camera.lookAt(0, 0, 0);
-
-    // Variables de animación
-    let velocity = -0.02;
-    let bounceFactor = 0.6; // Factor de rebote
-    let gravity = -0.02;
-
-    function animate() {
-        // Simular caída con rebote
-        if (mercurio.position.z > 0.5) {
-            velocity += gravity; // Aceleración por gravedad
-            mercurio.position.z += velocity;
-        } else {
-            velocity = -velocity * bounceFactor; // Rebote
-            if (Math.abs(velocity) < 0.01) {
-                velocity = 0; // Detener rebote pequeño
-            } else {
-              mercurio.position.z += velocity;
+        function drawGrid() {
+            for (let row = 0; row < hexRows; row++) {
+                for (let col = 0; col < hexCols; col++) {
+                    const x = col * hexSpacing + (row % 2 === 0 ? 0 : hexSpacing / 2);
+                    const y = row * hexSize * Math.sqrt(3);
+                    drawHexagon(x, y);
+                }
             }
         }
 
-        controls.update();
-        renderer.render(scene, camera);
-        requestAnimationFrame(animate);
-
-         // Reiniciar la posición de la esfera cuando caiga por debajo del plano
-        if (mercurio.position.z < -2) {
-            mercurio.position.z = 5;
-            velocity = -0.02;
+        function createMercury() {
+            mercury.push({
+                x: 0,
+                y: Math.random() * canvas.height,
+                radius: 10,
+                color: 'red',
+                speed: 2,
+                captured: false,
+                capturePosition: capturePositions[Math.floor(Math.random() * capturePositions.length)] // Posición de captura aleatoria
+            });
         }
-    }
 
-    animate(); // Iniciar animación
-</script>
+        function drawMercury() {
+            mercury.forEach(particle => {
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                ctx.fillStyle = particle.color;
+                ctx.fill();
+            });
+        }
 
+        function updateMercury() {
+            mercury.forEach(particle => {
+                if (!particle.captured) {
+                    particle.x += particle.speed;
+                }
+
+                // Simulación de "captura" (simplificada)
+                if (particle.x > particle.capturePosition) {
+                    particle.captured = true;
+                    particle.color = 'gray';
+                }
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+            drawMercury();
+            updateMercury();
+            requestAnimationFrame(animate);
+
+            if (Math.random() < 0.02) {
+                createMercury();
+            }
+        }
+
+        animate();
+    </script>
 </body>
 </html>
