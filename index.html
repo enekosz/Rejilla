@@ -35,8 +35,17 @@
                 const yPos = y + hexSize * Math.sin(angle);
                 ctx.lineTo(xPos, yPos);
             }
-            ctx.strokeStyle = '#888';
+            // Efecto de brillo
+            ctx.strokeStyle = 'cyan'; // Color del brillo
+            ctx.lineWidth = 2; // Ancho del brillo
+            ctx.shadowColor = 'cyan'; // Color de la sombra
+            ctx.shadowBlur = 10; // Desenfoque de la sombra
             ctx.stroke();
+
+            // Restaurar valores por defecto
+            ctx.shadowColor = 'black';
+            ctx.shadowBlur = 0;
+            ctx.lineWidth = 1;
         }
 
         function drawGrid() {
